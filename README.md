@@ -141,6 +141,7 @@ Discussing this in-depth is a big ol' **TODO** item. I've converted projects usi
 ## Avenues for Contribution ##
 Look for `TODO`s in the codebase; they're usually good contribution opportunities!
 
+- Fastify support. A lot of `OpenapiValidationInterceptor` expects to be using Express. Probably not a huge challenge, though.
 - Add optional Swagger UI functionality, similar to `@nestjs/swagger`.
 - Tests in isolation. I'm not clear on how to adequately unit test against functionality hanging directly off of NestJS; right now this library (along with other highly integrated libraries of mine, like nestjs-auth) relies on integration tests in example projects.
 - Only the simplest parameter styles are currently supported: `simple` (the only one for headers, though paths have other options that we don't support) and `form` for query parameters. If somebody out there needs more complex styles, you should

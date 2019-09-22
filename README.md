@@ -146,7 +146,7 @@ Look for `TODO`s in the codebase; they're usually good contribution opportunitie
 - Cleaner types around some of the API. For example, right now you must use one of `content` or `multiContent` for request bodies, but there's no type checking to assert that one _must_ be used. Similarly, operation responses are a little kludgy. Probably an easy fix for somebody!
 - Deeply nested schemas are probably not being handled correctly (allowing the use of a `SchemaLike`--a JSON schema or a class constructor decorated with `@OAS.Model()`) in all cases.
 - [Example functionality]() is entirely absent. Squaring it with simplified flavors of content objects is hard and I don't use it; pull requests welcome.
-- There are a couple of odd behaviors resulting from using [ajv]() to validate client parameters/request bodies against our OpenAPI 3 schemas. In particular, when dealing with a string field, ajv coerces `null` to the empty string. I think this should fail hard instead, but
+- There are a couple of odd behaviors resulting from using [ajv]() to validate client parameters/request bodies against our OpenAPI 3 schemas. In particular, when dealing with a string field, ajv coerces `null` to the empty string. I think this should fail hard instead, but not enough to not use ajv!
 
 [NestJS]: https://nestjs.com/
 [Ed's skeleton project]: https://github.com/eropple/nest-and-next-skeleton

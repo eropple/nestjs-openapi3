@@ -21,7 +21,8 @@ You'll need to attach the module to your application. We have to do it this way,
 ```ts
 // It's good practice to make this a separate method; you can then
 // do handy stuff like generate your OpenAPI document without having
-// to start a web server. Take a look at our
+// to start a web server. Take a look at our example app for more
+// information.
 async function buildOpenapiDocument(app: INestApplication) {
   return OpenapiModule.createDocument(
     {

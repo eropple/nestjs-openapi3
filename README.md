@@ -4,6 +4,9 @@
 `@eropple/nestjs-openapi3` is a library for [NestJS]() to generate [OpenAPI 3.x]() documents from your API specification. It attempts to be more integrated with the flow of your application than [@nestjs/swagger]() and to push you towards building clean, well-separated APIs along the way.
 
 ## Release History ##
+### `0.1.1` ###
+- Fixed one of the wildest bugs in recent memory. The long and the short of it is that TypeScript decorators on an unset property render that property as being non-writable. A real solution is probably in the TypeScript folks's court, but in the interim this library now generates a descriptor for a property when applicable to avoid making it unwritable.
+
 ### `0.1.0` ###
 - Initial release.
 

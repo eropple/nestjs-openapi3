@@ -67,12 +67,21 @@ export function addToMapMetadata<K, V>(
 }
 
 export const SetMetadata = (
-  props: { [metadataKey: string]: any }
+  props: { [metadataKey: string]: any },
+  writable: boolean = false,
 ): any => (target: object, key?: any, descriptor?: any) => {
   let actualTarget: object = target;
   let actualReturn: object = target;
 
-  if (descriptor) {
+  if (key && !descriptor) {
+    // This is a really weird behavior and I don't pretend to fully understand it,
+    // but apparently TypeScript doesn't define `writable` on properties in all
+    // use cases where you're using them.
+    Object.defineProperty(target, key, {
+      writable: true,
+      enumerable: true,
+    });
+  } else if (descriptor) {
     actualTarget = descriptor.value;
     actualReturn = descriptor;
   }

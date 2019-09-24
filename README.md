@@ -94,7 +94,7 @@ These decorators only apply to the arguments in an endpoint hander function.
 - `@OAS.Header()` - wraps NestJS's `@Headers()`, only supporting a single selected header.
 - `@OAS.Query()` - wraps NestJS's `@Query()`.
 
-### `SchemaLike` ###
+### `SchemaLike`: "Do What I Mean" Schema Objects ###
 Most of this library doesn't rely directly on the `O3TS.SchemaObject` fetched out of our dependency, `openapi3-ts`. Instead, we rely on the concept of a `SchemaLike`, which is defined as thus:
 
 ```ts

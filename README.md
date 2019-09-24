@@ -94,6 +94,32 @@ These decorators only apply to the arguments in an endpoint hander function.
 - `@OAS.Header()` - wraps NestJS's `@Headers()`, only supporting a single selected header.
 - `@OAS.Query()` - wraps NestJS's `@Query()`.
 
+### `SchemaLike` ###
+Most of this library doesn't rely directly on the `O3TS.SchemaObject` fetched out of our dependency, `openapi3-ts`. Instead, we rely on the concept of a `SchemaLike`, which is defined as thus:
+
+```ts
+export type SchemaLikeSchemaObject =
+  & O3TS.SchemaObject
+  & {
+    allOf: Array<O3TS.SchemaObject | O3TS.ReferenceObject | Ctor | SchemaLikeSchemaObject>;
+    anyOf: Array<O3TS.SchemaObject | O3TS.ReferenceObject | Ctor | SchemaLikeSchemaObject>;
+    oneOf: Array<O3TS.SchemaObject | O3TS.ReferenceObject | Ctor | SchemaLikeSchemaObject>;
+
+    items: O3TS.SchemaObject | O3TS.ReferenceObject | Ctor | SchemaLikeSchemaObject;
+  };
+
+export type SchemaLike =
+  SchemaLikeSchemaObject | O3TS.SchemaObject | O3TS.ReferenceObject | Ctor |
+  [SchemaLikeSchemaObject | O3TS.SchemaObject | O3TS.ReferenceObject | Ctor];
+```
+
+Anywhere you would normally write a [Schema Object](), you can pass any of the above:
+
+- A schema object (`{ type: 'string' }`, etc.) -- but there's a twist: any of `allOf`, `anyOf`, or `oneOf` can be a `SchemaLike`.
+- A reference object to a schema declared elsewhere in the API or explicitly against the `OpenApiBuilder` class during the attachment of the module.
+- A 1-tuple array with any of the above, which will yield `{ type: 'array', items: YourSubSchemaHere }`.
+- A constructor for a class decorated with `@OAS.Model()`, which will yield as a schema entered into `#/components/schemas` and used as a reference (`{ $ref: '#/components/schemas/YourClassName' }`).
+
 ### Fetching the OpenAPI Document ###
 The OpenAPI specification strongly suggests that the OpenAPI JSON document should be served at `/openapi.json`. We follow that suggestion.
 
@@ -149,7 +175,7 @@ Look for `TODO`s in the codebase; they're usually good contribution opportunitie
 - Tests in isolation. I'm not clear on how to adequately unit test against functionality hanging directly off of NestJS; right now this library (along with other highly integrated libraries of mine, like nestjs-auth) relies on integration tests in example projects.
 - Only the simplest parameter styles are currently supported: `simple` (the only one for headers, though paths have other options that we don't support) and `form` for query parameters. If somebody out there needs more complex styles, you should
 - Cleaner types around some of the API. For example, right now you must use one of `content` or `multiContent` for request bodies, but there's no type checking to assert that one _must_ be used. Similarly, operation responses are a little kludgy. Probably an easy fix for somebody!
-- Deeply nested schemas are probably not being handled correctly (allowing the use of a `SchemaLike`--a JSON schema or a class constructor decorated with `@OAS.Model()`) in all cases.
+- Deeply nested SchemaLikes (see above) may not be being handled correctly in all cases.
 - [Example functionality]() is entirely absent. Squaring it with simplified flavors of content objects is hard and I don't use it; pull requests welcome.
 - There are a couple of odd behaviors resulting from using [ajv]() to validate client parameters/request bodies against our OpenAPI 3 schemas. In particular, when dealing with a string field, ajv coerces `null` to the empty string. I think this should fail hard instead, but not enough to not use ajv!
 
@@ -157,9 +183,10 @@ Look for `TODO`s in the codebase; they're usually good contribution opportunitie
 [Ed's skeleton project]: https://github.com/eropple/nest-and-next-skeleton
 [OpenAPI 3.x]: https://swagger.io/docs/specification/about/
 [@nestjs/swagger]: https://docs.nestjs.com/recipes/swagger
+[Schema Object]: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#schemaObject
 [the OpenAPI 3.x spec]: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md
 [what's new in OpenAPI 3.x]: https://swagger.io/blog/news/whats-new-in-openapi-3-0/
-[Example functionality]: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#exampleObject
-[Discriminators]: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#discriminatorObject
+[Example functionality]: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#exampleObject
+[Discriminators]: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#discriminatorObject
 [ajv]: https://github.com/epoberezkin/ajv
 [ajv coercion chart]: https://ajv.js.org/coercion.html

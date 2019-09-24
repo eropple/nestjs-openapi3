@@ -13,6 +13,7 @@ import { schemaReference } from '../references';
 import { getAllMetadata, getAllParameterMetadata } from './metadata';
 import { ModelBaseInfo } from '../decorators';
 import { InferenceError } from '../errors';
+import { isReferenceObject, isSchemaObject } from 'openapi3-ts';
 
 export function parseSchemaLike(c: SchemaLike, modelsToParse: Array<Ctor>): O3TS.SchemaObject | O3TS.ReferenceObject {
   // It's important to note that this method DOES have a side effect: it
@@ -20,9 +21,29 @@ export function parseSchemaLike(c: SchemaLike, modelsToParse: Array<Ctor>): O3TS
 
   if (typeof(c) === 'function') {
     return inferSchema(c, modelsToParse);
-  }
+  } else if (Array.isArray(c)) {
+    return { type: 'array', items: parseSchemaLike(c[0], modelsToParse) };
+  } else if (isReferenceObject(c)) {
+    return c;
+  } else { // O3TS.SchemaObjects, but potentially with deeper schemaLikes.
+    const ret: O3TS.SchemaObject = {
+      ...c,
+    };
 
-  return c;
+    if (c.allOf) {
+      ret.allOf = c.allOf.map(sub => parseSchemaLike(sub, modelsToParse));
+    }
+
+    if (c.anyOf) {
+      ret.anyOf = c.anyOf.map(sub => parseSchemaLike(sub, modelsToParse));
+    }
+
+    if (c.oneOf) {
+      ret.oneOf = c.oneOf.map(sub => parseSchemaLike(sub, modelsToParse));
+    }
+
+    return ret;
+  }
 }
 
 /**
@@ -37,20 +58,28 @@ export function parseSchemaLike(c: SchemaLike, modelsToParse: Array<Ctor>): O3TS
  * @param type The type to introspect (as best we can)
  * @param modelsToParse A list of models that need to be examined to make this schema work.
  */
-export function inferSchema(type: any, modelsToParse: Array<Ctor>): O3TS.SchemaObject | O3TS.ReferenceObject {
+export function inferSchema(
+  type: any,
+  modelsToParse: Array<Ctor>,
+): O3TS.SchemaObject | O3TS.ReferenceObject {
   switch (type) {
     case Number:
       return { type: 'number' };
-      break;
     case String:
       return { type: 'string' };
-      break;
     case Date:
       return { type: 'string', format: 'date' };
-      break;
     case Boolean:
       return { type: 'boolean' };
-      break;
+    case Array:
+      throw new InferenceError(
+        'Array received as a type in inferSchema. This usually happens ' +
+        'in OpenAPI response definitions because the module is trying to ' +
+        'parse a parameter or return value that is an Array; since TypeScript ' +
+        'erases generic type information at runtime, you will need to ' +
+        'explicitly specify schema information wherever you are receiving ' +
+        'this error.',
+      );
     case Promise:
       throw new InferenceError(
         'Promise received as a type in inferSchema. This usually happens ' +

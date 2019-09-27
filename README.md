@@ -1,4 +1,6 @@
 # `@eropple/nestjs-openapi3` #
+[![npm version](https://badge.fury.io/js/%40eropple%2Fnestjs-openapi3.svg)](https://badge.fury.io/js/%40eropple%2Fnestjs-openapi3)
+
 **Please note that this library is in an _alpha_ state. The API should be more or less stable and the failure cases of the library are pretty minimum, but no promises.**
 
 `@eropple/nestjs-openapi3` is a library for [NestJS]() to generate [OpenAPI 3.x]() documents from your API specification. It attempts to be more integrated with the flow of your application than [@nestjs/swagger]() and to push you towards building clean, well-separated APIs along the way.

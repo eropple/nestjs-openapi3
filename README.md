@@ -6,6 +6,10 @@
 `@eropple/nestjs-openapi3` is a library for [NestJS]() to generate [OpenAPI 3.x]() documents from your API specification. It attempts to be more integrated with the flow of your application than [@nestjs/swagger]() and to push you towards building clean, well-separated APIs along the way.
 
 ## Release History ##
+### `0.2.1` ###
+- Fixed some lingering errors in the way endpoint metadata was being set in some cases.
+- Fixed a bunch of TSLint errors I'd forgotten to take care of. Next TODO will be setting up Husky.
+
 ### `0.2.0` ###
 - You can now pass 1-tuple arrays as `content` and other places where schemas are expected; they will be parsed as an array of whatever type or schema is in that array.
 - `allOf`, `anyOf`, `oneOf`, and `items` all act as you'd expect--that is, [do-what-I-mean schema conversion](https://github.com/eropple/nestjs-openapi3/#schemalike-do-what-i-mean-schema-objects) now respect functions, arrays, etc. and parse them correctly.

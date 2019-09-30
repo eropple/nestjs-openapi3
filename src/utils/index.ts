@@ -16,4 +16,4 @@ export const MethodIntToString: ReadonlyMap<number, string> = new Map<number, st
 
 export const MethodStringToInt: ReadonlyMap<string, number> = new Map<string, number>(
   methodConstants.map(t => [t[1], t[0]]),
-)
+);

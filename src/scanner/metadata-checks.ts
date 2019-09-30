@@ -88,7 +88,6 @@ const checkSecuritySchemes: MetadataFn = (m: { [k: string]: any }, op: AnyOperat
   }
 };
 
-
 const checkParameters: MetadataFn = (m: { [k: string]: any }, op: AnyOperationInfo) => {
   if (m[OPENAPI_PARAMETER]) {
     op.parameters = { ...op.parameters, ...m[OPENAPI_PARAMETER] };

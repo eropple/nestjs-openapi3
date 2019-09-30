@@ -35,8 +35,6 @@ export class OpenapiModule {
       throw new ArchaeologyFailedError(`Expected NestApplication (through NestJS 'INestApplication'), got '${app.constructor.name}'.`);
     }
 
-
-
     const container: NestContainer = (app as any).container;
     if (!container) {
       throw new ArchaeologyFailedError('Could not extract NestContainer from app.');

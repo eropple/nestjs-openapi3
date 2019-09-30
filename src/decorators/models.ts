@@ -78,4 +78,3 @@ export const Prop =
  */
 export const ArrayProp = (args: ArrayPropArgs) =>
   SetMetadata({ [OPENAPI_MODEL_PROP_ARRAY]: args });
-

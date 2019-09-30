@@ -32,7 +32,6 @@ import {
   OPENAPI_PARAMETER,
   OPENAPI_PARAMETER_BY_INDEX,
   OPENAPI_REQUEST_INDEX,
-  OPENAPI_PARAMETER_PROPERTY_KEYS,
 } from '../metadata-keys';
 import { DefinitionError } from '../../errors';
 
@@ -254,6 +253,7 @@ export interface HeaderArgs extends BaseParamArgs {
   style?: 'simple';
 }
 
+// tslint:disable-next-line: no-empty-interface
 export interface HeaderOpts {
 }
 

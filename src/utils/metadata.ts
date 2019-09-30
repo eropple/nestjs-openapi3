@@ -56,7 +56,7 @@ export function addToMapMetadata<K, V>(
   key?: string | symbol,
 ) {
   const current: Map<K, V> = (key ? Reflect.getMetadata(metadataKey, target, key) : Reflect.getMetadata(metadataKey, target)) || new Map<K, V>();
-  const values = new Map<K, V>([ ...current, ]);
+  const values = new Map<K, V>([ ...current ]);
   values.set(mapKey, mapValue);
 
   if (key) {

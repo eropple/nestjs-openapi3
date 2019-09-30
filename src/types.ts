@@ -78,8 +78,7 @@ export type MediaTypeWithSchemaLike =
   O3TS.MediaTypeObject | { schema: SchemaLike };
 
 // tslint:disable-next-line: interface-over-type-literal
-export type ContentsWithSchemaLike =
-  { [mediatype: string]: MediaTypeWithSchemaLike };
+export type ContentsWithSchemaLike = { [mediatype: string]: MediaTypeWithSchemaLike };
 
 export interface SimpleResponseWithSchemaLike extends SimpleContentWithSchemaLike {
   description?: string;

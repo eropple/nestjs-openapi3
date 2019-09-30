@@ -89,7 +89,9 @@ function buildHandlerMethod(nestDecorator: NestMethodDecorator) {
 
         return nestDecorator(route)(target, propertyKey, descriptor);
       } catch (err) {
-        throw new DefinitionError(`Failed to build handler for '${target.constructor.name}#${propertyKey.toString()}':\n\n${err}`)
+        throw new DefinitionError(
+          `Failed to build handler for '${target.constructor.name}` +
+          `#${propertyKey.toString()}':\n\n${err}`);
       }
     };
   };

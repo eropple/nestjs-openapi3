@@ -11,6 +11,7 @@ import {
   OPENAPI_REQUEST_BODY,
   OPENAPI_INTERNAL_MODELS_TO_PARSE,
   OPENAPI_SECURITY_SCHEMES,
+  OPENAPI_IGNORE,
 } from '../decorators/metadata-keys';
 import {
   AnyOperationInfo,
@@ -22,6 +23,11 @@ type MetadataFn = (metadata: { [k: string]: any }, opInfo: AnyOperationInfo) => 
 type EndpointMetadataFn = (metadata: { [k: string]: any }, opInfo: OperationInfo) => void;
 
 export function checkParentMetadata(metadata: { [k: string]: any }, baseOpInfo: BaseOperationInfo) {
+  checkIgnore(metadata, baseOpInfo);
+  if (baseOpInfo.ignore) {
+    return;
+  }
+
   checkTags(metadata, baseOpInfo);
   checkParameters(metadata, baseOpInfo);
   checkPathChunks(metadata, baseOpInfo);
@@ -31,6 +37,11 @@ export function checkParentMetadata(metadata: { [k: string]: any }, baseOpInfo: 
 }
 
 export function checkEndpointMetadata(metadata: { [k: string]: any }, opInfo: OperationInfo) {
+  checkIgnore(metadata, opInfo);
+  if (opInfo.ignore) {
+    return;
+  }
+
   checkOperationInfo(metadata, opInfo);
   checkParameters(metadata, opInfo);
   checkPathChunks(metadata, opInfo);
@@ -46,6 +57,12 @@ export function checkEndpointArgumentMetadata(metadata: { [k: string]: any }, op
   checkSecuritySchemes(metadata, opInfo);
   checkModels(metadata, opInfo);
 }
+
+const checkIgnore: MetadataFn = (m: { [k: string]: any }, op: AnyOperationInfo) => {
+  if (m[OPENAPI_IGNORE]) {
+    op.ignore = m[OPENAPI_IGNORE];
+  }
+};
 
 const checkPathChunks: MetadataFn = (m: { [k: string]: any }, op: AnyOperationInfo) => {
   if (m[PATH]) {

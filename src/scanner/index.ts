@@ -36,6 +36,7 @@ function scanModule(builder: OpenapiBuilder, mod: Module, baseLogger: BunyanLike
   logger.trace({ metadata: moduleMetadata }, `Module metadata for '${mod.instance.constructor.name}'.`);
 
   const baseOpInfo: BaseOperationInfo = {
+    ignore: false,
     tags: [],
     pathChunks: [],
     parameters: {},
@@ -97,11 +98,6 @@ function scanEndpoint(
     return;
   }
 
-  if (endpointMetadata[OPENAPI_IGNORE]) {
-    logger.trace('Method has an ignore attribute; skipping.');
-    return;
-  }
-
   const opInfo: OperationInfo = {
     ...baseOpInfo,
     name: endpoint.name,
@@ -111,6 +107,10 @@ function scanEndpoint(
   };
 
   checkEndpointMetadata(endpointMetadata, opInfo);
+  if (opInfo.ignore) {
+    logger.trace('Method has an ignore attribute; skipping.');
+    return;
+  }
 
   const argumentMetadata = getAllParameterMetadata(target, endpoint.name);
   checkEndpointArgumentMetadata(argumentMetadata, opInfo);

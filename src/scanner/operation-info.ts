@@ -7,6 +7,7 @@ import { Ctor } from '../types';
  * This just acts as a holder.
  */
 export interface BaseOperationInfo {
+  ignore: boolean;
   tags: Array<string>;
   pathChunks: Array<string>;
   deprecated?: boolean;

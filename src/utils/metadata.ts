@@ -88,9 +88,7 @@ export const SetMetadata = (
 
   const pairs = _.toPairs(props);
   for (const pair of pairs) {
-    key
-      ? Reflect.defineMetadata(pair[0], pair[1], actualTarget, key)
-      : Reflect.defineMetadata(pair[0], pair[1], actualTarget);
+    Reflect.defineMetadata(pair[0], pair[1], actualTarget);
   }
   return actualReturn;
 };

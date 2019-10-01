@@ -279,10 +279,35 @@ export function Header(name: string, args: HeaderArgs = {}, opts: HeaderOpts = {
               : inferSchema(parameterType, modelsToParse),
         };
 
-        // const fetchDecorator =
-        //   (!parameter.schema || opts.skipConvert)
-        //     ? createParamDecorator((data, req) => req.header(name))
-        //     : createValidatingRequestDecorator((req) => req.header(name), parameter.schema);
+        addToMapMetadata<number, O3TS.ParameterObject>(OPENAPI_PARAMETER_BY_INDEX, parameterIndex, parameter, target, propertyKey);
+        mergeObjectMetadata(OPENAPI_PARAMETER, { [name]: parameter }, target, propertyKey);
+        return NestHeaders(name)(target, propertyKey, parameterIndex);
+      });
+  };
+}
+
+export interface CookieArgs extends BaseParamArgs {
+  style?: 'simple';
+}
+
+// tslint:disable-next-line: no-empty-interface
+export interface CookieArgs {
+
+}
+
+export function Cookie(name: string, args: HeaderArgs = {}, opts: HeaderOpts = {}) {
+  return (target: object, propertyKey: string | symbol, parameterIndex: number) => {
+    baseParameterHandler('Cookie', target, propertyKey, parameterIndex,
+      (parameterMetadata, parameterType, modelsToParse) => {
+        const parameter: O3TS.ParameterObject = {
+          ...args,
+          name,
+          in: 'cookie',
+          schema:
+            args.schema
+              ? parseSchemaLike(args.schema, modelsToParse)
+              : inferSchema(parameterType, modelsToParse),
+        };
 
         addToMapMetadata<number, O3TS.ParameterObject>(OPENAPI_PARAMETER_BY_INDEX, parameterIndex, parameter, target, propertyKey);
         mergeObjectMetadata(OPENAPI_PARAMETER, { [name]: parameter }, target, propertyKey);

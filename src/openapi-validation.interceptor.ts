@@ -4,6 +4,7 @@ import * as _ from 'lodash';
 import Ajv, { ErrorObject } from 'ajv';
 import * as O3TS from 'openapi3-ts';
 import { Request, Response } from 'express';
+import * as Cookie from 'cookie';
 
 import { getAllParameterMetadata } from './utils';
 import { OPENAPI_REQUEST_INDEX, OPENAPI_REQUEST_BODY, OPENAPI_PARAMETER_BY_INDEX } from './decorators/metadata-keys';
@@ -173,6 +174,12 @@ export class OpenapiValidationInterceptor implements NestInterceptor {
     return next.handle();
   }
 
+  private ensureCookies(req: Request) {
+    if (!req.cookies) {
+      req.cookies = Cookie.parse(req.headers.cookie || '', {});
+    }
+  }
+
   private buildValidationData(context: ExecutionContext): ValidationCacheData {
     const controller = context.getClass();
     const handler = context.getHandler();
@@ -226,7 +233,7 @@ export class OpenapiValidationInterceptor implements NestInterceptor {
     // TODO: Parse non-simple parameter styles here
     switch (parameter.in) {
       case 'cookie':
-        throw new Error(`Cookie parameters are unsupported.`);
+        return request.cookies[parameter.name];
       case 'header':
         return request.headers[parameter.name.toLowerCase()];
       case 'query':
@@ -239,7 +246,7 @@ export class OpenapiValidationInterceptor implements NestInterceptor {
   private setParameterInRequest(request: Request, parameter: O3TS.ParameterObject, value: any) {
     switch (parameter.in) {
       case 'cookie':
-        throw new Error(`Cookie parameters are unsupported.`);
+        return request.cookies[parameter.name] = value;
       case 'header':
         return request.headers[parameter.name.toLowerCase()] = value;
       case 'query':

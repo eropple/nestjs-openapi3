@@ -6,6 +6,10 @@
 `@eropple/nestjs-openapi3` is a library for [NestJS]() to generate [OpenAPI 3.x]() documents from your API specification. It attempts to be more integrated with the flow of your application than [@nestjs/swagger]() and to push you towards building clean, well-separated APIs along the way.
 
 ## Release History ##
+### `0.3.0` ###
+- Now serving your docs with Swagger UI, located at `/api-docs`. Pass `skipApiServing: true` to `OpenapiModule#attach` to disable it.
+- Added `Cookie` parameter decorator. If you already have something like `cookie-parser` set up, this library will use the cookies that it parsed; otherwise, it'll parse and create `req.cookies` with `cookie`.
+
 ### `0.2.1` ###
 - Fixed some lingering errors in the way endpoint metadata was being set in some cases.
 - Fixed a bunch of TSLint errors I'd forgotten to take care of. Next TODO will be setting up Husky.

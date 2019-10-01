@@ -18,7 +18,15 @@ export interface OpenapiModuleCreateDocumentArgs {
 }
 export interface OpenapiModuleAttachArgs extends OpenapiModuleCreateDocumentArgs {
   document?: O3TS.OpenAPIObject;
+  /**
+   * If `true`, do not serve the OpenAPI document at `/openapi.json`. This
+   * implies `skipApiServing = true`.
+   */
   skipJsonServing?: boolean;
+  /**
+   * If `true`, do not serve the Swagger editor at `/api-docs`.
+   */
+  skipApiServing?: boolean;
   basePath?: string;
 }
 
@@ -73,10 +81,13 @@ export class OpenapiModule {
       baseLogger,
       document,
       skipJsonServing,
+      skipApiServing,
       basePath,
     }: OpenapiModuleAttachArgs,
     fn?: OpenapiBuilderConfigFn,
   ) {
+    const logger = bunyanize(baseLogger || console).child({ component: this.name });
+
     if (!document) {
       if (!fn) {
         throw new Error('If a document is not provided to OpenapiModule#attach, a builder function must be.');
@@ -90,13 +101,30 @@ export class OpenapiModule {
       basePath = basePath.substr(1);
     }
 
-    const openapiPath = [basePath, 'openapi.json'].join('/');
     const httpAdapter = app.getHttpAdapter();
 
     if (!skipJsonServing) {
+      const openapiPath = [basePath, 'openapi.json'].join('/');
+      const apiDocsPath = [basePath, 'api-docs'].join('/');
+
       httpAdapter.get(openapiPath,
         (req: Request, res: Response) => res.contentType('json').send(JSON.stringify(document, null, 2)),
       );
+
+      if (!skipApiServing) {
+        try {
+          // tslint:disable-next-line: no-require-imports
+          const swaggerUi = require('swagger-ui-express');
+
+          const swaggerHtml = swaggerUi.generateHTML(document, {});
+
+          app.use(apiDocsPath, swaggerUi.serveFiles(document, {}));
+          httpAdapter.get(apiDocsPath, (req, res) => res.contentType('html').send(swaggerHtml));
+
+        } catch (err) {
+          logger.warn({ err }, 'Error when loading `swagger-ui-express`. Make sure you have it in your package.json.');
+        }
+      }
     }
 
     app.useGlobalInterceptors(new OpenapiValidationInterceptor(document));

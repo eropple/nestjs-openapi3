@@ -25,6 +25,8 @@ Pop into your NestJS project and `npm install @eropple/nestjs-openapi3` or `yarn
 
 You'll need reasonably up-to-date versions of `@nestjs/common`, `@nestjs/core`, `reflect-metadata`, and `rxjs`. **NestJS before version 6.5 is unsupported and shall not be supported.**
 
+To serve your OpenAPI document as an explorable page with "try it out" functionality, you'll also need `swagger-ui-express`. If you don't want to serve this, you'll need to pass `skipApiServing: true` to `OpenapiModule#attach`, below.
+
 ## Usage ##
 First and foremost, you should be aware that `@eropple/nestjs-openapi3` is a heavily integrated library. This is going to touch a lot of your codebase. If you're new to OpenAPI, you should investigate [the OpenAPI 3.x spec](). If you've used Swagger, whether through `@nestjs/swagger` or another avenue, you should read up on [what's new in OpenAPI 3.x]().
 
@@ -71,6 +73,8 @@ async function configureApp(app: INestApplication) {
   );
 }
 ```
+
+You can now see your API document at `/openapi.json` and your Swagger UI at `/api-docs`.
 
 ### Decorators, Decorators, and More Decorators ###
 This package provides a number of decorators and it's probably best to look at [Ed's skeleton project]() to get a works-in-anger example of the full API.

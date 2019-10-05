@@ -1,8 +1,9 @@
 {
   "name": "@eropple/nestjs-openapi3",
-  "version": "0.3.0",
-  "description": "OpenAPI 3.x document generation and serving for NestJS.",
+  "version": "0.3.1",
+  "description": "OpenAPI 3.x document generation, presentation, and validation for NestJS.",
   "main": "dist",
+  "tags": [ "nest", "nestjs", "openapi", "oas3", "swagger" ],
   "author": "Ed Ropple",
   "license": "MIT",
   "repository": {

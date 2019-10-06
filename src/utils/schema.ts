@@ -1,6 +1,7 @@
 import * as O3TS from 'openapi3-ts';
+import * as _ from 'lodash';
 
-import { Ctor, SchemaLike, ScalarPropArgs, ArrayPropArgs } from '../types';
+import { Ctor, SchemaLike, ScalarPropArgs, ArrayPropArgs, SimpleResponseWithSchemaLike } from '../types';
 import {
   OPENAPI_MODEL_RAW,
   OPENAPI_MODEL_BASE,
@@ -191,4 +192,40 @@ function buildSchemaFromAnnotatedProp(
 
     schema.properties![propName] = propSchema;
   }
+}
+
+export function prepareResponsesFromSchemaLikes(
+  responses: { [code: string]: SimpleResponseWithSchemaLike },
+  returnType: any,
+  modelsToParse: Array<Ctor>,
+): { [code: string]: O3TS.ResponseObject } {
+  return _.fromPairs(
+    _.toPairs(responses)
+      .map(t => {
+        const sr = t[1];
+        const schemaLikeContent: { [mediaType: string]: SchemaLike } = { ...(sr.multiContent || {}) };
+        if (sr.content) {
+          schemaLikeContent['application/json'] = sr.content;
+        }
+        if (returnType && Object.keys(schemaLikeContent).length === 0) {
+          schemaLikeContent['application/json'] = inferSchema(returnType, modelsToParse);
+        }
+
+        const mediaTypeContent =
+          _.fromPairs(
+            _.toPairs(schemaLikeContent)
+              .map(kv => {
+                return [kv[0], { schema: parseSchemaLike(kv[1], modelsToParse) }];
+              }));
+
+        const fixedResponse: O3TS.ResponseObject = {
+          ...t[1],
+          description: t[1].description || 'No description given.',
+          content: mediaTypeContent,
+        };
+
+        // this is silly, but it patches up the object correctly for multi-content
+        delete (fixedResponse as any).multiContent;
+        return [t[0], fixedResponse];
+      }));
 }

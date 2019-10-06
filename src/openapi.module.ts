@@ -4,19 +4,37 @@ import { LoggerLike, bunyanize } from '@eropple/bunyan-wrapper';
 import * as O3TS from 'openapi3-ts';
 import { Request, Response } from 'express';
 
-import { scan } from './scanner';
+import { scan, ScanOptions } from './scanner';
 import { ArchaeologyFailedError } from './errors';
 import { OpenapiBuilder } from './builder';
 import { validate } from './validate';
 import { OpenapiValidationInterceptor } from './openapi-validation.interceptor';
+import { SimpleResponseWithSchemaLike } from './types';
 
 export type OpenapiBuilderConfigFn = (b: OpenapiBuilder) => void;
 
 export interface OpenapiModuleCreateDocumentArgs {
+  /**
+   * The NestJS application to explore to generate the OpenAPI document.
+   */
   app: INestApplication;
+  /**
+   * Logger that the module should use to emit information, warnings, and errors.
+   */
   baseLogger?: LoggerLike;
+  /**
+   * The set of responses that should be applied to every endpoint. This _does
+   * not_ ensure that these responses _are_ sent; you should write a conformant
+   * error filter that does that.
+   */
+  defaultResponses?: { [code: string]: SimpleResponseWithSchemaLike };
 }
 export interface OpenapiModuleAttachArgs extends OpenapiModuleCreateDocumentArgs {
+  /**
+   * Optionally-provided OpenAPI document. Useful if you've created your
+   * document already with `OpenapiModule.createDocument` and just need to
+   * stand it up in your application container now.
+   */
   document?: O3TS.OpenAPIObject;
   /**
    * If `true`, do not serve the OpenAPI document at `/openapi.json`. This
@@ -39,13 +57,22 @@ export interface OpenapiModuleAttachArgs extends OpenapiModuleCreateDocumentArgs
 }
 
 export class OpenapiModule {
+  /**
+   * Creates and returns an OpenAPI document. Accepts a `fn` argument, as well, that
+   * allows customization of the document (via its builder class) before returning
+   * it.
+   *
+   * @param fn Function for customizing the OpenAPI builder before returning.
+   */
   static async createDocument(
     {
       app,
       baseLogger,
+      defaultResponses,
     }: OpenapiModuleCreateDocumentArgs,
     fn: OpenapiBuilderConfigFn,
   ): Promise<O3TS.OpenAPIObject> {
+    console.log(defaultResponses)
     const logger = bunyanize(baseLogger || console).child({ component: this.name });
     if (!(app instanceof NestApplication)) {
       throw new ArchaeologyFailedError(`Expected NestApplication (through NestJS 'INestApplication'), got '${app.constructor.name}'.`);
@@ -63,7 +90,10 @@ export class OpenapiModule {
       logger.warn('No builder function passed to OpenapiModule.attach; your OpenAPI document will probably look weird.');
     }
 
-    scan(builder, container, logger);
+    const scanOptions: ScanOptions = {
+      defaultResponses,
+    };
+    scan(builder, container, logger, scanOptions);
 
     const document = builder.getSpec();
     const validationResult = await validate(document);
@@ -92,6 +122,7 @@ export class OpenapiModule {
       skipApiServing,
       apiDocs,
       basePath,
+      ...rest
     }: OpenapiModuleAttachArgs,
     fn?: OpenapiBuilderConfigFn,
   ) {
@@ -105,7 +136,7 @@ export class OpenapiModule {
         throw new Error('If a document is not provided to OpenapiModule#attach, a builder function must be.');
       }
 
-      document = await OpenapiModule.createDocument({ app, baseLogger }, fn);
+      document = await OpenapiModule.createDocument({ app, baseLogger, ...rest }, fn);
     }
 
     basePath = basePath || '';

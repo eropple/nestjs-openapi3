@@ -11,7 +11,7 @@ import * as O3TS from 'openapi3-ts';
 
 import { OperationInfoArgs, SimpleResponseWithSchemaLike, Ctor, SchemaLike } from '../../types';
 import { Operation } from './informational';
-import { getAllParameterMetadata, inferSchema, appendArrayMetadata, parseSchemaLike } from '../../utils';
+import { getAllParameterMetadata, inferSchema, appendArrayMetadata, parseSchemaLike, prepareResponsesFromSchemaLikes } from '../../utils';
 import { OPENAPI_INTERNAL_MODELS_TO_PARSE, OPENAPI_OPERATION_INFO } from '../metadata-keys';
 import { DefinitionError } from '../../errors';
 
@@ -41,47 +41,16 @@ function buildHandlerMethod(nestDecorator: NestMethodDecorator) {
             ...(info.responses || {}),
           };
           if (info.response) {
-            responses.default = info.response;
+            responses['200'] = info.response;
           }
           if (Object.keys(responses).length === 0) {
-            responses.default = {
+            responses['200'] = {
               description: 'No return information has been specified.',
               content: returnType,
             };
           }
 
-          const preparedResponses =
-            _.fromPairs(
-              _.toPairs(responses)
-                .map(t => {
-                  const sr = t[1];
-                  const schemaLikeContent: { [mediaType: string]: SchemaLike } = { ...(sr.multiContent || {}) };
-                  if (sr.content) {
-                    schemaLikeContent['application/json'] = sr.content;
-                  }
-                  if (Object.keys(schemaLikeContent).length === 0) {
-                    schemaLikeContent['application/json'] = inferSchema(returnType, modelsToParse);
-                  }
-
-                  const mediaTypeContent =
-                    _.fromPairs(
-                      _.toPairs(schemaLikeContent)
-                        .map(kv => {
-                          return [kv[0], { schema: parseSchemaLike(kv[1], modelsToParse) }];
-                        }));
-
-                  const fixedResponse: O3TS.ResponseObject = {
-                    ...t[1],
-                    description: t[1].description || 'No description given.',
-                    content: mediaTypeContent,
-                  };
-
-                  // this is silly, but it patches up the object correctly for multi-content
-                  delete (fixedResponse as any).multiContent;
-                  return [t[0], fixedResponse];
-                }));
-
-          op.responses = preparedResponses;
+          op.responses = prepareResponsesFromSchemaLikes(responses, returnType, modelsToParse);
 
           appendArrayMetadata(OPENAPI_INTERNAL_MODELS_TO_PARSE, modelsToParse, target, propertyKey);
           Operation(op)(target, null, descriptor);

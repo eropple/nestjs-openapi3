@@ -8,24 +8,39 @@ import _ from 'lodash';
 import Voca from 'voca';
 
 import { OpenapiBuilder, OperationMethod } from '../builder';
-import { getAllMetadata, MethodIntToString, getAllParameterMetadata } from '../utils';
+import { getAllMetadata, MethodIntToString, getAllParameterMetadata, prepareResponsesFromSchemaLikes } from '../utils';
+import { SimpleResponseWithSchemaLike, ContentsWithSchemaLike } from '../types';
 import { UnrecognizedNestMethodNumberError } from './errors';
 import { BaseOperationInfo, OperationInfo } from './operation-info';
 import { checkParentMetadata, checkEndpointMetadata, checkKeyedEndpointMetadata } from './metadata-checks';
 
-export function scan(builder: OpenapiBuilder, container: NestContainer, baseLogger: BunyanLike): OpenapiBuilder {
+export interface ScanOptions {
+  defaultResponses?: { [code: string]: SimpleResponseWithSchemaLike };
+}
+
+export function scan(
+  builder: OpenapiBuilder,
+  container: NestContainer,
+  baseLogger: BunyanLike,
+  options: ScanOptions = {},
+): OpenapiBuilder {
   const logger = baseLogger.child({ phase: 'scan' });
   logger.debug('Initializing application scan.');
 
   const modules = container.getModules().values();
   for (const mod of modules) {
-    scanModule(builder, mod, logger);
+    scanModule(builder, mod, logger, options);
   }
 
   return builder;
 }
 
-function scanModule(builder: OpenapiBuilder, mod: Module, baseLogger: BunyanLike) {
+function scanModule(
+  builder: OpenapiBuilder,
+  mod: Module,
+  baseLogger: BunyanLike,
+  options: ScanOptions,
+) {
   const logger = baseLogger.child({ module: mod.instance.constructor.name });
   logger.trace(`Scanning module '${mod.instance.constructor.name}'.`);
 
@@ -44,7 +59,7 @@ function scanModule(builder: OpenapiBuilder, mod: Module, baseLogger: BunyanLike
   checkParentMetadata(moduleMetadata, baseOpInfo);
 
   for (const controller of mod.controllers.values()) {
-    scanController(builder, controller, baseOpInfo, logger);
+    scanController(builder, controller, baseOpInfo, logger, options);
   }
 }
 
@@ -53,6 +68,7 @@ function scanController(
   controllerWrapper: InstanceWrapper<Controller>,
   baseOpInfo: BaseOperationInfo,
   baseLogger: BunyanLike,
+  options: ScanOptions,
 ) {
   const { metatype } = controllerWrapper;
 
@@ -73,7 +89,7 @@ function scanController(
       .filter(p => typeof(p) === 'function');
 
   for (const candidate of candidates) {
-    scanEndpoint(builder, metatype.prototype, candidate, newBaseOpInfo, logger);
+    scanEndpoint(builder, metatype.prototype, candidate, newBaseOpInfo, logger, options);
   }
 }
 
@@ -83,6 +99,7 @@ function scanEndpoint(
   endpoint: (args: Array<any>) => any,
   baseOpInfo: BaseOperationInfo,
   baseLogger: BunyanLike,
+  options: ScanOptions,
 ) {
   const logger = baseLogger.child({ endpoint: endpoint.name });
   logger.trace(`Scanning endpoint candidate '${endpoint.name}'.`);
@@ -112,8 +129,10 @@ function scanEndpoint(
   const argumentMetadata = getAllParameterMetadata(target, endpoint.name);
   checkKeyedEndpointMetadata(argumentMetadata, opInfo);
 
-  const security = stripNullsAndUndefinedFromObject(opInfo.securitySchemes);
-  console.log(opInfo.securitySchemes, security)
+  const security = [stripNullsAndUndefinedFromObject(opInfo.securitySchemes)];
+  // TODO: this gets repeated; can be refactored later (along with the one in routing.ts)
+  const defaultResponses = prepareResponsesFromSchemaLikes(options.defaultResponses || {}, undefined, opInfo.modelsToParse);
+  const responses = { ...defaultResponses, ...opInfo.responses };
 
   const oasOperation: O3TS.OperationObject = {
     tags: opInfo.tags,
@@ -124,8 +143,8 @@ function scanEndpoint(
     externalDocs: opInfo.externalDocs,
     parameters: Object.values(opInfo.parameters),
     requestBody: opInfo.requestBody,
-    responses: opInfo.responses,
-    security: [stripNullsAndUndefinedFromObject(opInfo.securitySchemes)],
+    responses,
+    security,
   };
 
   for (const modelToParse of opInfo.modelsToParse) {

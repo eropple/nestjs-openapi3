@@ -24,9 +24,17 @@ export interface OpenapiModuleAttachArgs extends OpenapiModuleCreateDocumentArgs
    */
   skipJsonServing?: boolean;
   /**
-   * If `true`, do not serve the Swagger editor at `/api-docs`.
+   * If `true`, do not serve the Swagger editor at `/api-docs`. Will be replaced
+   * by `apiDocs: null` in `0.5.0.
+   *
+   * @deprecated
    */
   skipApiServing?: boolean;
+  /**
+   * Which API documentation system you'd like to use. Defaults to `swagger`. The
+   * default will become `redoc` in `0.5.0`. Set to `null` to serve no API docs.
+   */
+  apiDocs?: 'swagger' | 'redoc' | null;
   basePath?: string;
 }
 
@@ -82,11 +90,15 @@ export class OpenapiModule {
       document,
       skipJsonServing,
       skipApiServing,
+      apiDocs,
       basePath,
     }: OpenapiModuleAttachArgs,
     fn?: OpenapiBuilderConfigFn,
   ) {
     const logger = bunyanize(baseLogger || console).child({ component: this.name });
+    if (apiDocs === undefined) {
+      apiDocs = 'swagger';
+    }
 
     if (!document) {
       if (!fn) {
@@ -111,18 +123,64 @@ export class OpenapiModule {
         (req: Request, res: Response) => res.contentType('json').send(JSON.stringify(document, null, 2)),
       );
 
-      if (!skipApiServing) {
-        try {
-          // tslint:disable-next-line: no-require-imports
-          const swaggerUi = require('swagger-ui-express');
+      if (!skipApiServing && apiDocs !== null) {
+        switch (apiDocs) {
+          case 'swagger':
+            try {
+              // tslint:disable-next-line: no-require-imports
+              const swaggerUi = require('swagger-ui-express');
 
-          const swaggerHtml = swaggerUi.generateHTML(document, {});
+              const html = swaggerUi.generateHTML(document, {});
 
-          app.use(apiDocsPath, swaggerUi.serveFiles(document, {}));
-          httpAdapter.get(apiDocsPath, (req, res) => res.contentType('html').send(swaggerHtml));
+              app.use(apiDocsPath, swaggerUi.serveFiles(document, {}));
+              httpAdapter.get(apiDocsPath, (req, res) => res.contentType('html').send(html));
 
-        } catch (err) {
-          logger.warn({ err }, 'Error when loading `swagger-ui-express`. Make sure you have it in your package.json.');
+            } catch (err) {
+              logger.warn({ err }, 'Error when loading `swagger-ui-express`. Make sure you have it in your package.json.');
+            }
+            break;
+          case 'redoc':
+              try {
+                // TODO: make this work without internet access (either bundling ReDoc or building it on the fly)
+                //       I don't like relying on external scripts for anything, as APIs might live behind a firewall. However,
+                //       I do like ReDoc a lot, and I think it's better than Swagger UI. So, in the interim, we'll rely on
+                //       an external ReDoc build via jsdelivr.
+                const redocHtml = `
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <title>ReDoc</title>
+                      <!-- needed for adaptive design -->
+                      <meta charset="utf-8"/>
+                      <meta name="viewport" content="width=device-width, initial-scale=1">
+                      <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+
+                      <!--
+                      ReDoc doesn't change outer page styles
+                      -->
+                      <style>
+                        body {
+                          margin: 0;
+                          padding: 0;
+                        }
+                      </style>
+                    </head>
+                    <body>
+                      <div id="redoc-container"></div>
+                      <script src="https://cdn.jsdelivr.net/npm/redoc@2.0.0-rc.16/bundles/redoc.standalone.js"></script>
+                      <script>
+                        const spec = JSON.parse(\`${JSON.stringify(document)}\`);
+                        Redoc.init(spec, {}, document.getElementById('redoc-container'));
+                      </script>
+                    </body>
+                  </html>
+                `;
+
+                httpAdapter.get(apiDocsPath, (req, res) => res.contentType('html').send(redocHtml));
+              } catch (err) {
+                logger.warn({ err }, 'Error when adding ReDoc.');
+              }
+              break;
         }
       }
     }

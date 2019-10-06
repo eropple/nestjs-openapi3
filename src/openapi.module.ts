@@ -77,7 +77,6 @@ export class OpenapiModule {
     }: OpenapiModuleCreateDocumentArgs,
     fn: OpenapiBuilderConfigFn,
   ): Promise<O3TS.OpenAPIObject> {
-    console.log(defaultResponses)
     const logger = bunyanize(baseLogger || console).child({ component: this.name });
     if (!(app instanceof NestApplication)) {
       throw new ArchaeologyFailedError(`Expected NestApplication (through NestJS 'INestApplication'), got '${app.constructor.name}'.`);

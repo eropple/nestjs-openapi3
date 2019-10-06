@@ -4,6 +4,9 @@
 `@eropple/nestjs-openapi3` is a library for [NestJS]() to generate [OpenAPI 3.x]() documents from your API specification. It attempts to be more integrated with the flow of your application than [@nestjs/swagger]() and to push you towards building clean, well-separated APIs along the way.
 
 ## Release History ##
+### `0.4.2` ###
+- Left a logging statement in, 'cause I'm a monster. My apologies to your stdout.
+
 ### `0.4.1` ###
 - Added `defaultResponses` as an option when creating a document, to allow for standard error types to be returned from your APIs. This does _not_ ensure that these objects are created; you should write an exception filter to do that--but since you can just pass a model type as your response type here, it's pretty easy to just create the object and write it out to your response.
 - Retracted ReDoc support; after investigating them more completely I discovered that they intend to keep on-page client functionality as a paid product and I have no interest in encouraging that.

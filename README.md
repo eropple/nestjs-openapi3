@@ -4,11 +4,14 @@
 `@eropple/nestjs-openapi3` is a library for [NestJS]() to generate [OpenAPI 3.x]() documents from your API specification. It attempts to be more integrated with the flow of your application than [@nestjs/swagger]() and to push you towards building clean, well-separated APIs along the way.
 
 ## Release History ##
-### `0.4.0` ###
-- Added ReDoc support. There is a new config option, `apiDocs: 'swagger' | 'redoc' | null`; it defaults to `swagger`. If null is passed, APIs will not be served; this is in addition to `skipApiServing: true`. **This will change in `0.5.0`:** the default will become `redoc` and `skipApiServing: true` will be removed.
+### `0.4.1` ###
+- Added `defaultResponses` as an option when creating a document, to allow for standard error types to be returned from your APIs. This does _not_ ensure that these objects are created; you should write an exception filter to do that--but since you can just pass a model type as your response type here, it's pretty easy to just create the object and write it out to your response.
+- Retracted ReDoc support; after investigating them more completely I discovered that they intend to keep on-page client functionality as a paid product and I have no interest in encouraging that.
+- Added RapiDoc 5.3.0 support. `apiDocs:` now takes `'swagger' | 'rapidoc' | null`. This is self-hosted, with no dependency on a remote resource for its script, so you can use it in environments without Internet access. **`rapidoc` shall become the new default in or before version `1.0.0`.**
+- Fixed another bug related to NestJS metadata parsing. (Pulled `0.4.0` after discovery; it was a tough one.)
 
-### `0.3.1` ###
-- No code changes, but I've removed the "alpha" tag as it appears to be giving people the wrong impression. People in the NestJS community are starting to use this library in anger and I'm confident in its capabilities.
+### <strike>`0.4.0`</strike> ###
+- Added ReDoc support. There is a new config option, `apiDocs: 'swagger' | 'redoc' | null`; it defaults to `swagger`. If null is passed, APIs will not be served; this is in addition to `skipApiServing: true`. **This will change before `1.0.0`:** the default will become `redoc` and `skipApiServing: true` will be removed.
 
 ### `0.3.0` ###
 - Now serving your docs with Swagger UI, located at `/api-docs`. Pass `skipApiServing: true` to `OpenapiModule#attach` to disable it.
@@ -33,7 +36,7 @@ Pop into your NestJS project and `npm install @eropple/nestjs-openapi3` or `yarn
 
 You'll need reasonably up-to-date versions of `@nestjs/common`, `@nestjs/core`, `reflect-metadata`, and `rxjs`. **NestJS before version 6.5 is unsupported and shall not be supported.**
 
-To serve your OpenAPI document as an explorable page with "try it out" functionality, you'll also need `swagger-ui-express` (when `apiDocs: 'swagger'`, the default, is set) or `redoc` (when `apiDocs: 'redoc'` is set). If you don't want to serve this, you'll need to pass `skipApiServing: true` to `OpenapiModule#attach`, below.
+To serve your OpenAPI document as an explorable page with "try it out" functionality, you'll also need `swagger-ui-express` (when `apiDocs: 'swagger'`, the default, is set) or `rapidoc` (when `apiDocs: 'rapidoc'` is set). If you don't want to serve this, pass `apiDocs: null`.
 
 ## Usage ##
 First and foremost, you should be aware that `@eropple/nestjs-openapi3` is a heavily integrated library. This is going to touch a lot of your codebase. If you're new to OpenAPI, you should investigate [the OpenAPI 3.x spec](). If you've used Swagger, whether through `@nestjs/swagger` or another avenue, you should read up on [what's new in OpenAPI 3.x]().
@@ -144,6 +147,8 @@ Anywhere you would normally write a [Schema Object](), you can pass any of the a
 
 ### Fetching the OpenAPI Document ###
 The OpenAPI specification strongly suggests that the OpenAPI JSON document should be served at `/openapi.json`. We follow that suggestion.
+
+Your API docs are served at `/api-docs`. It's configurable between `rapidoc` and `swagger` (the default, though it will stop being the default in or before version `1.0.0`).
 
 ### Validation and Coercion ###
 One important difference between `@nestjs/swagger` and `@eropple/nestjs-openapi3` is that this library does type conversion to match your desired schema. By default, in NestJS, the following HTTP handler doesn't do what you'd expect:

@@ -44,7 +44,8 @@ export class OpenapiBuilder extends OpenapiTS.OpenApiBuilder {
     }
 
     const modelsToParse: Array<Ctor> = [];
-    this.addSchema(name, buildSchemaFromAnnotatedType(t, modelsToParse));
+    const schema = buildSchemaFromAnnotatedType(t, modelsToParse);
+    this.addSchema(name, schema);
 
     for (const modelToParse of modelsToParse) {
       this.ensureSchemaFromType(modelToParse);

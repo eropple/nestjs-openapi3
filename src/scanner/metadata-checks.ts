@@ -51,7 +51,7 @@ export function checkEndpointMetadata(metadata: { [k: string]: any }, opInfo: Op
   checkModels(metadata, opInfo);
 }
 
-export function checkEndpointArgumentMetadata(metadata: { [k: string]: any }, opInfo: OperationInfo) {
+export function checkKeyedEndpointMetadata(metadata: { [k: string]: any }, opInfo: OperationInfo) {
   checkRequestBody(metadata, opInfo);
   checkParameters(metadata, opInfo);
   checkSecuritySchemes(metadata, opInfo);

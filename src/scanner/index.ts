@@ -7,14 +7,11 @@ import * as O3TS from 'openapi3-ts';
 import _ from 'lodash';
 import Voca from 'voca';
 
-import {
-  OPENAPI_IGNORE,
-} from '../decorators/metadata-keys';
 import { OpenapiBuilder, OperationMethod } from '../builder';
 import { getAllMetadata, MethodIntToString, getAllParameterMetadata } from '../utils';
 import { UnrecognizedNestMethodNumberError } from './errors';
 import { BaseOperationInfo, OperationInfo } from './operation-info';
-import { checkParentMetadata, checkEndpointMetadata, checkEndpointArgumentMetadata } from './metadata-checks';
+import { checkParentMetadata, checkEndpointMetadata, checkKeyedEndpointMetadata } from './metadata-checks';
 
 export function scan(builder: OpenapiBuilder, container: NestContainer, baseLogger: BunyanLike): OpenapiBuilder {
   const logger = baseLogger.child({ phase: 'scan' });
@@ -113,7 +110,10 @@ function scanEndpoint(
   }
 
   const argumentMetadata = getAllParameterMetadata(target, endpoint.name);
-  checkEndpointArgumentMetadata(argumentMetadata, opInfo);
+  checkKeyedEndpointMetadata(argumentMetadata, opInfo);
+
+  const security = stripNullsAndUndefinedFromObject(opInfo.securitySchemes);
+  console.log(opInfo.securitySchemes, security)
 
   const oasOperation: O3TS.OperationObject = {
     tags: opInfo.tags,

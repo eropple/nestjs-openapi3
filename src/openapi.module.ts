@@ -1,8 +1,10 @@
 import { NestApplication, NestContainer } from '@nestjs/core';
-import { INestApplication } from '@nestjs/common';
-import { LoggerLike, bunyanize } from '@eropple/bunyan-wrapper';
+import { INestApplication, HttpServer } from '@nestjs/common';
+import { LoggerLike, bunyanize, BunyanLike } from '@eropple/bunyan-wrapper';
 import * as O3TS from 'openapi3-ts';
 import { Request, Response } from 'express';
+import * as FS from 'fs';
+import { findUp } from '@eropple/find-up';
 
 import { scan, ScanOptions } from './scanner';
 import { ArchaeologyFailedError } from './errors';
@@ -10,6 +12,8 @@ import { OpenapiBuilder } from './builder';
 import { validate } from './validate';
 import { OpenapiValidationInterceptor } from './openapi-validation.interceptor';
 import { SimpleResponseWithSchemaLike } from './types';
+
+const RAPIDOC_VERSION = '5.3.0';
 
 export type OpenapiBuilderConfigFn = (b: OpenapiBuilder) => void;
 
@@ -49,10 +53,11 @@ export interface OpenapiModuleAttachArgs extends OpenapiModuleCreateDocumentArgs
    */
   skipApiServing?: boolean;
   /**
-   * Which API documentation system you'd like to use. Defaults to `swagger`. The
-   * default will become `redoc` in `0.5.0`. Set to `null` to serve no API docs.
+   * Which API documentation system you'd like to use. Defaults to `swagger`.
+   * The default will become `rapidoc` in or by `1.0.0`. Set to `null` to serve
+   * no API docs.
    */
-  apiDocs?: 'swagger' | 'redoc' | null;
+  apiDocs?: 'swagger' | 'rapidoc' | null;
   basePath?: string;
 }
 
@@ -157,65 +162,77 @@ export class OpenapiModule {
       if (!skipApiServing && apiDocs !== null) {
         switch (apiDocs) {
           case 'swagger':
-            try {
-              // tslint:disable-next-line: no-require-imports
-              const swaggerUi = require('swagger-ui-express');
-
-              const html = swaggerUi.generateHTML(document, {});
-
-              app.use(apiDocsPath, swaggerUi.serveFiles(document, {}));
-              httpAdapter.get(apiDocsPath, (req, res) => res.contentType('html').send(html));
-
-            } catch (err) {
-              logger.warn({ err }, 'Error when loading `swagger-ui-express`. Make sure you have it in your package.json.');
-            }
+            this.serveSwagger(document, apiDocsPath, logger, app, httpAdapter);
             break;
-          case 'redoc':
-              try {
-                // TODO: make this work without internet access (either bundling ReDoc or building it on the fly)
-                //       I don't like relying on external scripts for anything, as APIs might live behind a firewall. However,
-                //       I do like ReDoc a lot, and I think it's better than Swagger UI. So, in the interim, we'll rely on
-                //       an external ReDoc build via jsdelivr.
-                const redocHtml = `
-                  <!DOCTYPE html>
-                  <html>
-                    <head>
-                      <title>ReDoc</title>
-                      <!-- needed for adaptive design -->
-                      <meta charset="utf-8"/>
-                      <meta name="viewport" content="width=device-width, initial-scale=1">
-                      <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
-
-                      <!--
-                      ReDoc doesn't change outer page styles
-                      -->
-                      <style>
-                        body {
-                          margin: 0;
-                          padding: 0;
-                        }
-                      </style>
-                    </head>
-                    <body>
-                      <div id="redoc-container"></div>
-                      <script src="https://cdn.jsdelivr.net/npm/redoc@2.0.0-rc.16/bundles/redoc.standalone.js"></script>
-                      <script>
-                        const spec = JSON.parse(\`${JSON.stringify(document)}\`);
-                        Redoc.init(spec, {}, document.getElementById('redoc-container'));
-                      </script>
-                    </body>
-                  </html>
-                `;
-
-                httpAdapter.get(apiDocsPath, (req, res) => res.contentType('html').send(redocHtml));
-              } catch (err) {
-                logger.warn({ err }, 'Error when adding ReDoc.');
-              }
+          case 'rapidoc':
+              this.serveRapidoc(document, apiDocsPath, logger, httpAdapter);
               break;
         }
       }
     }
 
     app.useGlobalInterceptors(new OpenapiValidationInterceptor(document));
+  }
+
+  private static serveSwagger(
+    document: O3TS.OpenAPIObject,
+    apiDocsPath: string,
+    logger: BunyanLike,
+    app: INestApplication,
+    httpAdapter: HttpServer<any, any>,
+  ) {
+    try {
+      // tslint:disable-next-line: no-require-imports
+      const swaggerUi = require('swagger-ui-express');
+
+      const html = swaggerUi.generateHTML(document, {});
+
+      app.use(apiDocsPath, swaggerUi.serveFiles(document, {}));
+      httpAdapter.get(apiDocsPath, (req, res) => res.contentType('html').send(html));
+
+    } catch (err) {
+      logger.warn({ err }, 'Error when loading `swagger-ui-express`. Make sure you have it in your package.json.');
+    }
+  }
+
+  private static serveRapidoc(
+    document: O3TS.OpenAPIObject,
+    apiDocsPath: string,
+    logger: BunyanLike,
+    httpAdapter: HttpServer<any, any>,
+  ) {
+    try {
+      const assetPath = `${findUp(__dirname, 'assets', { searchFor: 'directories' })}/rapidoc-${RAPIDOC_VERSION}-min.js`;
+
+      const rapidocHtml = `
+        <!doctype html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+        </head>
+        <body>
+          <rapi-doc
+            id="RAPIDOC"
+            regular-font="Roboto, Calibri, 'Helvetica Neue', Helvetica, Arial, sans-serif"
+            mono-font="'Roboto Mono', Consolas,  Monaco, monospace"
+          ></rapi-doc>
+          <script type="module">
+            ${FS.readFileSync(assetPath, { encoding: 'utf8' })}
+          </script>
+          <script>
+            document.addEventListener('DOMContentLoaded', (event) => {
+              let docEl = document.getElementById("RAPIDOC");
+              let spec = JSON.parse(\`${JSON.stringify(document)}\`);
+              docEl.loadSpec(spec);
+            });
+          </script>
+        </body>
+        </html>
+      `;
+
+      httpAdapter.get(apiDocsPath, (req, res) => res.contentType('html').send(rapidocHtml));
+    } catch (err) {
+      logger.warn({ err }, 'Error when adding RapiDoc.');
+    }
   }
 }

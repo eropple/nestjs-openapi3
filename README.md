@@ -4,6 +4,9 @@
 `@eropple/nestjs-openapi3` is a library for [NestJS]() to generate [OpenAPI 3.x]() documents from your API specification. It attempts to be more integrated with the flow of your application than [@nestjs/swagger]() and to push you towards building clean, well-separated APIs along the way.
 
 ## Release History ##
+### `0.4.0` ###
+- Added ReDoc support. There is a new config option, `apiDocs: 'swagger' | 'redoc' | null`; it defaults to `swagger`. If null is passed, APIs will not be served; this is in addition to `skipApiServing: true`. **This will change in `0.5.0`:** the default will become `redoc` and `skipApiServing: true` will be removed.
+
 ### `0.3.1` ###
 - No code changes, but I've removed the "alpha" tag as it appears to be giving people the wrong impression. People in the NestJS community are starting to use this library in anger and I'm confident in its capabilities.
 
@@ -30,7 +33,7 @@ Pop into your NestJS project and `npm install @eropple/nestjs-openapi3` or `yarn
 
 You'll need reasonably up-to-date versions of `@nestjs/common`, `@nestjs/core`, `reflect-metadata`, and `rxjs`. **NestJS before version 6.5 is unsupported and shall not be supported.**
 
-To serve your OpenAPI document as an explorable page with "try it out" functionality, you'll also need `swagger-ui-express`. If you don't want to serve this, you'll need to pass `skipApiServing: true` to `OpenapiModule#attach`, below.
+To serve your OpenAPI document as an explorable page with "try it out" functionality, you'll also need `swagger-ui-express` (when `apiDocs: 'swagger'`, the default, is set) or `redoc` (when `apiDocs: 'redoc'` is set). If you don't want to serve this, you'll need to pass `skipApiServing: true` to `OpenapiModule#attach`, below.
 
 ## Usage ##
 First and foremost, you should be aware that `@eropple/nestjs-openapi3` is a heavily integrated library. This is going to touch a lot of your codebase. If you're new to OpenAPI, you should investigate [the OpenAPI 3.x spec](). If you've used Swagger, whether through `@nestjs/swagger` or another avenue, you should read up on [what's new in OpenAPI 3.x]().

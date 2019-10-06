@@ -148,6 +148,11 @@
     "@hapi/joi" "^15.0.3"
     "@types/hapi__joi" "^15.0.1"
 
+"@eropple/find-up@0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@eropple/find-up/-/find-up-0.1.0.tgz#40023b94683f16cde7522358de8fe7de3a6f8c00"
+  integrity sha512-Ygbxp//vAw4MBWd6REbOlfweUCvsuxtBCNvqZXjj1N78gM61LYbjok7z7GVdFHv5mOTRRxs8awi88lj6rwjkfw==
+
 "@eropple/is-logger@^0.1.2":
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/@eropple/is-logger/-/is-logger-0.1.2.tgz#b401e26a49caea7f9b27f8fd18fe48e44521621f"

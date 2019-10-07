@@ -1,8 +1,8 @@
 import { NestApplication, NestContainer } from '@nestjs/core';
 import { INestApplication, HttpServer } from '@nestjs/common';
 import { LoggerLike, bunyanize, BunyanLike } from '@eropple/bunyan-wrapper';
-import * as O3TS from 'openapi3-ts';
 import { Request, Response } from 'express';
+import * as O3TS from 'openapi3-ts';
 import * as FS from 'fs';
 import { findUp } from '@eropple/find-up';
 
@@ -11,7 +11,7 @@ import { ArchaeologyFailedError } from './errors';
 import { OpenapiBuilder } from './builder';
 import { validate } from './validate';
 import { OpenapiValidationInterceptor } from './openapi-validation.interceptor';
-import { SimpleResponseWithSchemaLike } from './types';
+import { SimpleResponseWithSchemaLike, ValidationFailedResponseBuilder } from './types';
 
 const RAPIDOC_VERSION = '5.3.0';
 
@@ -59,6 +59,16 @@ export interface OpenapiModuleAttachArgs extends OpenapiModuleCreateDocumentArgs
    */
   apiDocs?: 'swagger' | 'rapidoc' | null;
   basePath?: string;
+
+  /**
+   * Used to build the JSON response (it's always `application/json`) when
+   * parameters or request bodies fail to pass OpenAPI validation. You can then
+   * add `400` and this type into your default responses to make your clients
+   * smarter. (It will also emit `415 Unsupported Media Type` errors, but no
+   * OpenAPI 3 client will ever see that, so adding it to all responses is
+   * probably overkill.)
+   */
+  validationFailedResponse?: ValidationFailedResponseBuilder;
 }
 
 export class OpenapiModule {
@@ -126,6 +136,7 @@ export class OpenapiModule {
       skipApiServing,
       apiDocs,
       basePath,
+      validationFailedResponse,
       ...rest
     }: OpenapiModuleAttachArgs,
     fn?: OpenapiBuilderConfigFn,
@@ -170,7 +181,7 @@ export class OpenapiModule {
       }
     }
 
-    app.useGlobalInterceptors(new OpenapiValidationInterceptor(document));
+    app.useGlobalInterceptors(new OpenapiValidationInterceptor(document, validationFailedResponse));
   }
 
   private static serveSwagger(

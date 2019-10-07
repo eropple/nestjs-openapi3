@@ -1,4 +1,8 @@
 import * as O3TS from 'openapi3-ts';
+import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
+
+export type ValidationFailedResponseBuilder =
+  (request: ExpressRequest, response: ExpressResponse, statusCode: number, failures: Array<string>) => {};
 
 export type NoArgCtor<T = any> = new() => T;
 export type Ctor<T = any> = new(...args: Array<any>) => T;

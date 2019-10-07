@@ -9,6 +9,7 @@ import * as Cookie from 'cookie';
 import { getAllParameterMetadata } from './utils';
 import { OPENAPI_REQUEST_INDEX, OPENAPI_REQUEST_BODY, OPENAPI_PARAMETER_BY_INDEX } from './decorators/metadata-keys';
 import { observableResponse } from './utils/observable-responses';
+import { ValidationFailedResponseBuilder } from './types';
 
 const INTERNAL_WRAPPER = '__$wrap__';
 
@@ -49,6 +50,11 @@ function wrapSpecifiedSchema(schema?: O3TS.SchemaObject | O3TS.ReferenceObject):
     },
   };
 }
+
+const defaultValidationResponseBuilder: ValidationFailedResponseBuilder =
+  (req, res, statusCode, failures) => ({
+    errors: failures,
+  });
 
 /**
  * There is an annoying tension between the use of TypeScript type information
@@ -96,6 +102,7 @@ export class OpenapiValidationInterceptor implements NestInterceptor {
 
   constructor(
     private readonly document: O3TS.OpenAPIObject,
+    private readonly validationFailedBuilder: ValidationFailedResponseBuilder = defaultValidationResponseBuilder,
   ) {
     this.ajv = new Ajv({
       coerceTypes: true,
@@ -129,7 +136,8 @@ export class OpenapiValidationInterceptor implements NestInterceptor {
       if (!bodyValidator) {
         return observableResponse(
           response,
-          { errors: [`Unsupported body content type: ${contentType}`] },
+          this.validationFailedBuilder(request, response, HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+            [`Unsupported body content type: ${contentType}`]),
           HttpStatus.UNSUPPORTED_MEDIA_TYPE,
         );
       }
@@ -163,12 +171,11 @@ export class OpenapiValidationInterceptor implements NestInterceptor {
     }
 
     if (errors.length > 0) {
-      const resp = {
-        errors: errors.map(e =>
-          `${e[0]}: ${e[1].dataPath.replace(`.${INTERNAL_WRAPPER}.`, '')} ${e[1].message}`),
-      };
+      const failures = errors.map(e =>
+        `${e[0]}: ${e[1].dataPath.replace(`.${INTERNAL_WRAPPER}.`, '')} ${e[1].message}`);
+      const resp = this.validationFailedBuilder(request, response, HttpStatus.BAD_REQUEST, failures);
 
-      return observableResponse(response, resp, 400);
+      return observableResponse(response, resp, HttpStatus.BAD_REQUEST);
     }
 
     return next.handle();

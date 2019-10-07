@@ -4,6 +4,9 @@
 `@eropple/nestjs-openapi3` is a library for [NestJS]() to generate [OpenAPI 3.x]() documents from your API specification. It attempts to be more integrated with the flow of your application than [@nestjs/swagger]() and to push you towards building clean, well-separated APIs along the way.
 
 ## Release History ##
+### `0.4.3` ###
+- Added the `validationFailedResponse` option to `OpenapiModule.attach`. This allows you to customize the JSON output from the validation interceptor so you can return predictably-shaped errors. It won't, however, set a `400` default in `defaultResponses`; that's your job. (Also make sure your error filter returns the same shape for a 400!)
+
 ### `0.4.2` ###
 - Left a logging statement in, 'cause I'm a monster. My apologies to your stdout.
 
@@ -208,6 +211,7 @@ Look for `TODO`s in the codebase; they're usually good contribution opportunitie
 - Deeply nested SchemaLikes (see above) may not be being handled correctly in all cases.
 - [Example functionality]() is entirely absent. Squaring it with simplified flavors of content objects is hard and I don't use it; pull requests welcome.
 - There are a couple of odd behaviors resulting from using [ajv]() to validate client parameters/request bodies against our OpenAPI 3 schemas. In particular, when dealing with a string field, ajv coerces `null` to the empty string. I think this should fail hard instead, but not enough to not use ajv!
+- Maybe make `defaultResponses` a little smarter. Say you're using the module's `validationFailedResponse` builder--it doesn't make sense for a `400` to be on all endpoints, even ones where there are no parameters or headers. On the other hand, it _might_ make sense, because it means a user can throw a code 400 `HttpException` even when they're dealing with more intricate details of a bad request. Open to discussion.
 
 [NestJS]: https://nestjs.com/
 [Ed's skeleton project]: https://github.com/eropple/nest-and-next-skeleton

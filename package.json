@@ -1,6 +1,6 @@
 {
   "name": "@eropple/nestjs-openapi3",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "OpenAPI 3.x document generation, presentation, and validation for NestJS.",
   "main": "dist",
   "tags": [

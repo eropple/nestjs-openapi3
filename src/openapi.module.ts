@@ -231,9 +231,10 @@ export class OpenapiModule {
           </script>
           <script>
             document.addEventListener('DOMContentLoaded', (event) => {
-              let docEl = document.getElementById("RAPIDOC");
-              let spec = JSON.parse(\`${JSON.stringify(document)}\`);
-              docEl.loadSpec(spec);
+              window.docEl = document.getElementById("RAPIDOC");
+              window.specText = \`${JSON.stringify(document)}\`;
+              window.spec = JSON.parse(window.specText);
+              window.docEl.loadSpec(spec);
             });
           </script>
         </body>

@@ -28,7 +28,9 @@ export type SchemaLike =
   SchemaLikeSchemaObject | O3TS.SchemaObject | O3TS.ReferenceObject | Ctor |
   [SchemaLikeSchemaObject | O3TS.SchemaObject | O3TS.ReferenceObject | Ctor];
 export type AllPropProperties =
-  'nullable';
+  | 'nullable'
+  | 'example'
+  | 'description';
 
 export type ScalarPropProperties =
   | 'type'

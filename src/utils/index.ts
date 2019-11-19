@@ -1,6 +1,8 @@
 export * from './metadata';
 export * from './schema';
 export * from './argument-parsing';
+export * from './schema';
+export * from './prop-prefabs';
 
 const methodConstants: Array<[number, string]> = [
   [0, 'get'],

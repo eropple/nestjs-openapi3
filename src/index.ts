@@ -5,3 +5,5 @@ export * from './openapi-validation.interceptor';
 export * from './openapi.module';
 export * from './types';
 export * from './references';
+
+export * from './utils';

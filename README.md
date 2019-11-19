@@ -4,6 +4,11 @@
 `@eropple/nestjs-openapi3` is a library for [NestJS]() to generate [OpenAPI 3.x]() documents from your API specification. It attempts to be more integrated with the flow of your application than [@nestjs/swagger]() and to push you towards building clean, well-separated APIs along the way.
 
 ## Release History ##
+### `0.4.4` ###
+- Added `OAS.propPrefabs` that includes some helpful presets for dealing with UUIDs, dates, etc. in proper formatting. Some of these, like dates, are automatically handled _if it's a `Date`_, but if you, say, have `Date | null`, it becomes a pain. Hence things like `OAS.propPrefabs.uuid` and `OAS.propPrefabs.date`.
+- Adding the JSON schema text directly to the `window` object for RapiDoc; if you manage to send a bad JSON file for one reason or another, you can at least go `window.specText` and find out what's up.
+- Added `example` and `description` to prop arguments.
+
 ### `0.4.3` ###
 - Added the `validationFailedResponse` option to `OpenapiModule.attach`. This allows you to customize the JSON output from the validation interceptor so you can return predictably-shaped errors. It won't, however, set a `400` default in `defaultResponses`; that's your job. (Also make sure your error filter returns the same shape for a 400!)
 
